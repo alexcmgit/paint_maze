@@ -18,8 +18,8 @@ every empty cell using as few swipes as possible.
 - `generateMaze(size, numWalls)` — generates a random, guaranteed-solvable maze
   of the given dimensions with the requested number of walls.
 - `solveMaze(grid, startX, startY)` — runs a BFS over `(position, unpainted-set)`
-  states and returns the minimum number of swipes needed, or `-1` if the maze
-  is unsolvable.
+  states and returns the optimal sequence of swipe directions to play, an empty
+  list if the maze is already solved, or `null` if it is unsolvable.
 
 ## Getting started
 
@@ -78,8 +78,13 @@ final grid = [
   ['.', '.', '.'],
 ];
 
-final swipes = solveMaze(grid, 0, 0);
-print(swipes); // minimum number of swipes, or -1 if unsolvable
+final solution = solveMaze(grid, 0, 0);
+if (solution == null) {
+  print('Unsolvable');
+} else {
+  print('Swipes: ${solution.length}'); // 0 means already solved
+  print('Path: $solution'); // e.g. [Point(0, 1), Point(1, 0), ...]
+}
 ```
 
 ## Grid format
@@ -115,14 +120,24 @@ produces a solvable layout, so the returned maze is always valid.
 Returns a `MazeResult` with:
 
 - `grid` — the populated `List<List<String>>`.
-- `moves` — the minimum number of swipes required to solve it (always `> 0`).
+- `solution` — the optimal swipe path (`List<Point<int>>`, never empty).
+- `moves` — convenience getter for `solution.length`.
 - `start` — the start position as a `Point<int>`.
 
-### `int solveMaze(List<List<String>> grid, int startX, int startY)`
+### `List<Point<int>>? solveMaze(List<List<String>> grid, int startX, int startY)`
 
-Runs a breadth-first search over the state space and returns the minimum number
-of swipes required to paint every empty cell, or `-1` if the maze cannot be
-solved from the given start.
+Runs a breadth-first search over the state space and returns the optimal
+sequence of swipe directions that paints every empty cell.
+
+- Returns a non-empty `List<Point<int>>` for a solvable maze that needs at
+  least one swipe.
+- Returns an empty list when the start is already the only paintable cell.
+- Returns `null` if the maze cannot be solved from the given start.
+
+Each direction in the returned list is a unit vector along one axis:
+`Point(-1, 0)` (up), `Point(1, 0)` (down), `Point(0, -1)` (left), or
+`Point(0, 1)` (right). Replay them with `slide` starting from
+`Point(startX, startY)` to recover the ball's trajectory.
 
 ### `SlideResult slide(List<List<String>> grid, Point<int> from, Point<int> dir)`
 
